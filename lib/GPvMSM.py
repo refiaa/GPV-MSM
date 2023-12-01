@@ -78,7 +78,7 @@ class dataProcessor:
 
         self._save_data(all_daily_rains, days_in_year, lat, lon)
 
-
+    @staticmethod
     def _is_leap_year(self, year):
         return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
@@ -210,7 +210,7 @@ def main():
     upscaler.upscale_data()
 
     frequency = 2500  
-    duration = 1000  
+    duration = 500  
     winsound.Beep(frequency, duration)
 
 if __name__ == "__main__":
