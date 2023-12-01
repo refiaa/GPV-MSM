@@ -9,30 +9,19 @@ from tqdm import tqdm
 from scipy.interpolate import griddata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
+from config import BASE_URL, START_DATE, END_DATE, DOWNLOAD_FOLDER, INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR
 
 class GPvMSM_Downloder:
     def __init__(self, start_date, end_date, folder):
         self.start_date = start_date
         self.end_date = end_date
         self.folder = folder
-        self.base_url = "http://database.rish.kyoto-u.ac.jp/arch/jmadata/data/gpv/netcdf/MSM-S/r1h/"
+        self.base_url = BASE_URL
 
     def download_files(self):
         for date in self._get_dates_in_range():
             self._download_file_for_date(date)
-
-    # def download_files(self):
-    #     dates = self._get_dates_in_range()
-    #     with ThreadPoolExecutor(max_workers=5) as executor:
-    #         futures = [executor.submit(self._download_file_for_date, date) for date in dates]
-    #         for future in as_completed(futures):
-    #             try:
-    #                 future.result()
-    #             except Exception as exc:
-    #                 print(f'download Exception: {exc}')
-
-    # wanna use it in futher change in better way 
-
+            
     def _get_dates_in_range(self):
         delta = self.end_date - self.start_date
         
@@ -210,20 +199,16 @@ class DataUpscaler:
         dataset.close()
 
 def main():
-    start_date_str = '2015/01/01'
-    end_date_str = '2015/12/31'
-    download_folder = "./nc/GPvMSM/2015"
+    start_date = datetime.strptime(START_DATE, "%Y/%m/%d")
+    end_date = datetime.strptime(END_DATE, "%Y/%m/%d")
     
-    start_date = datetime.strptime(start_date_str, "%Y/%m/%d")
-    end_date = datetime.strptime(end_date_str, "%Y/%m/%d")
-    
-    downloader = GPvMSM_Downloder(start_date, end_date, download_folder) 
+    downloader = GPvMSM_Downloder(start_date, end_date, DOWNLOAD_FOLDER) 
     downloader.download_files()  
 
-    processor = DataProcessor(2015)
+    processor = DataProcessor(int(PROCESS_YEAR))
     processor.process_year()
 
-    upscaler = DataUpscaler('./nc/GPvMSM/yearly_data/2015.nc', './nc/GPvMSM/yearly_data/2015_upscaled_max.nc')
+    upscaler = DataUpscaler(INPUT_FILE, OUTPUT_FILE)
     upscaler.upscale_data()
 
     frequency = 2500  

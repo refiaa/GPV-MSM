@@ -25,7 +25,7 @@ from PIL import Image
 
 ################################# netCDF FILE VARIABLE ####################################
 
-nc_filename = '2015_upscaled.nc'
+nc_filename = '2015_upscaled_max.nc'
 variable_name = 'r1d'
 
 lon_min = 120
@@ -39,7 +39,7 @@ max_value = 15
 year = 2015
 
 start_date = '08/01'
-end_date = '08/01'
+end_date = '08/31'
 
 gif_filename = 'testing_v0.0.2.gif'
 
