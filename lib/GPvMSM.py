@@ -2,10 +2,13 @@ import os
 import requests
 import numpy as np
 import netCDF4 as nc
+import winsound as ws
+
 from datetime import datetime, timedelta
 from tqdm import tqdm
 from scipy.interpolate import griddata
-import winsound
+from concurrent.futures import ThreadPoolExecutor, as_completed
+
 
 class GPvMSM_Downloder:
     def __init__(self, start_date, end_date, folder):
@@ -17,6 +20,18 @@ class GPvMSM_Downloder:
     def download_files(self):
         for date in self._get_dates_in_range():
             self._download_file_for_date(date)
+
+    # def download_files(self):
+    #     dates = self._get_dates_in_range()
+    #     with ThreadPoolExecutor(max_workers=5) as executor:
+    #         futures = [executor.submit(self._download_file_for_date, date) for date in dates]
+    #         for future in as_completed(futures):
+    #             try:
+    #                 future.result()
+    #             except Exception as exc:
+    #                 print(f'download Exception: {exc}')
+
+    # wanna use it in futher change in better way 
 
     def _get_dates_in_range(self):
         delta = self.end_date - self.start_date
@@ -212,7 +227,7 @@ def main():
     frequency = 2500  
     duration = 500  
     
-    winsound.Beep(frequency, duration)
+    ws.Beep(frequency, duration)
 
 if __name__ == "__main__":
     main()
