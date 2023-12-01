@@ -79,7 +79,7 @@ class dataProcessor:
         os.makedirs(self.output_dir, exist_ok=True)
 
     def process_year(self):
-        days_in_year = 366 if self._is_leap_year(self.year) else 365
+        days_in_year = 366 if dataProcessor._is_leap_year(self.year) else 365
         all_daily_rains = self._initialize_rain_data(days_in_year)
 
         first_file_path = os.path.join(self.base_dir, f'{self.year}0101.nc')
@@ -94,7 +94,7 @@ class dataProcessor:
         self._save_data(all_daily_rains, days_in_year, lat, lon)
 
     @staticmethod
-    def _is_leap_year(self, year):
+    def _is_leap_year(year):
         return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
 
     def _initialize_rain_data(self, days_in_year):
@@ -151,6 +151,7 @@ class dataUpscaler:
 
     def _load_data(self):
         dataset = nc.Dataset(self.input_file)
+
         r1d = dataset.variables['r1d'][:]
         lat = dataset.variables['lat'][:]
         lon = dataset.variables['lon'][:]
@@ -166,6 +167,7 @@ class dataUpscaler:
 
     def _aggregate_data(self, original_data, original_lat, original_lon, target_lat, target_lon):
         target_data = np.zeros((original_data.shape[0], len(target_lat), len(target_lon)))
+        
         for t in range(original_data.shape[0]):
             
             for i, lat in enumerate(target_lat):
@@ -221,7 +223,7 @@ def main():
     processor = dataProcessor(2015)
     processor.process_year()
 
-    upscaler = dataUpscaler('./nc/GPvMSM/yearly_data/2015.nc', './nc/GPvMSM/yearly_data/2015_upscaled.nc')
+    upscaler = dataUpscaler('./nc/GPvMSM/yearly_data/2015.nc', './nc/GPvMSM/yearly_data/2015_upscaled_max.nc')
     upscaler.upscale_data()
 
     frequency = 2500  
