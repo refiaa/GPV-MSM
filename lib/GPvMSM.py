@@ -122,7 +122,7 @@ class dataProcessor:
             longitudes.units = 'degree_east'
 
 class dataUpscaler:
-    def __init__(self, input_file, output_file, method='mean'):
+    def __init__(self, input_file, output_file, method='max'):
         self.input_file = input_file
         self.output_file = output_file
         self.method = method
