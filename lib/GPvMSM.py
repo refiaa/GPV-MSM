@@ -67,11 +67,17 @@ class dataProcessor:
         days_in_year = 366 if self._is_leap_year(self.year) else 365
         all_daily_rains = self._initialize_rain_data(days_in_year)
 
+        first_file_path = os.path.join(self.base_dir, f'{self.year}0101.nc')
+        with nc.Dataset(first_file_path, 'r') as data:
+            lat = data.variables['lat'][:]
+            lon = data.variables['lon'][:]
+
         for day in range(days_in_year):
             current_date = datetime(self.year, 1, 1) + timedelta(days=day)
             self._process_day(current_date, all_daily_rains, day)
 
-        self._save_data(all_daily_rains)
+        self._save_data(all_daily_rains, days_in_year, lat, lon)
+
 
     def _is_leap_year(self, year):
         return year % 4 == 0 and (year % 100 != 0 or year % 400 == 0)
@@ -93,13 +99,13 @@ class dataProcessor:
                 daily_rain = np.sum(data.variables['r1h'][:], axis=0)
                 all_daily_rains[day, :, :] = daily_rain
 
-    def _save_data(self, all_daily_rains):
+    def _save_data(self, all_daily_rains, days_in_year, lat, lon):
         output_file = os.path.join(self.output_dir, f'{self.year}.nc')
         
         with nc.Dataset(output_file, 'w', format='NETCDF4') as output_ds:
             output_ds.createDimension('time', None)
-            output_ds.createDimension('lat', all_daily_rains.shape[1])
-            output_ds.createDimension('lon', all_daily_rains.shape[2])
+            output_ds.createDimension('lat', len(lat))
+            output_ds.createDimension('lon', len(lon))
 
             time = output_ds.createVariable('time', np.int32, ('time',))
             latitudes = output_ds.createVariable('lat', np.float32, ('lat',))
@@ -107,8 +113,8 @@ class dataProcessor:
             rain = output_ds.createVariable('r1d', np.float32, ('time', 'lat', 'lon',))
 
             time[:] = np.arange(1, days_in_year + 1)
-            latitudes[:] = data.variables['lat'][:]
-            longitudes[:] = data.variables['lon'][:]
+            latitudes[:] = lat
+            longitudes[:] = lon
             rain[:, :, :] = all_daily_rains
 
             rain.units = 'mm/day'
@@ -168,6 +174,7 @@ class dataUpscaler:
 
     def _save_data(self, data, lat, lon, time):
         dataset = nc.Dataset(self.output_file, 'w', format='NETCDF4_CLASSIC')
+        
         dataset.createDimension('time', len(time))
         dataset.createDimension('lat', len(lat))
         dataset.createDimension('lon', len(lon))
