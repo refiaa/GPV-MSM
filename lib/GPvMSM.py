@@ -193,8 +193,8 @@ def main():
     start_date = datetime.strptime(start_date_str, "%Y/%m/%d")
     end_date = datetime.strptime(end_date_str, "%Y/%m/%d")
     
-    downloader = GPvMSM_Downloder(start_date, end_date, download_folder)  # Renamed variable
-    downloader.download_files()  # Use the new instance variable name
+    downloader = GPvMSM_Downloder(start_date, end_date, download_folder) 
+    downloader.download_files()  
 
     processor = dataProcessor(2015)
     processor.process_year()
