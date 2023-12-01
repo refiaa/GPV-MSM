@@ -211,6 +211,7 @@ def main():
 
     frequency = 2500  
     duration = 500  
+    
     winsound.Beep(frequency, duration)
 
 if __name__ == "__main__":
