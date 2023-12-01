@@ -70,7 +70,7 @@ class GPvMSM_Downloder:
 
             print(f"Downloaded {local_filename}")
 
-class dataProcessor:
+class DataProcessor:
     def __init__(self, year):
         self.year = year
         self.base_dir = f'./nc/GPvMSM/{year}/'
@@ -79,7 +79,7 @@ class dataProcessor:
         os.makedirs(self.output_dir, exist_ok=True)
 
     def process_year(self):
-        days_in_year = 366 if dataProcessor._is_leap_year(self.year) else 365
+        days_in_year = 366 if DataProcessor._is_leap_year(self.year) else 365
         all_daily_rains = self._initialize_rain_data(days_in_year)
 
         first_file_path = os.path.join(self.base_dir, f'{self.year}0101.nc')
@@ -136,7 +136,7 @@ class dataProcessor:
             latitudes.units = 'degree_north'
             longitudes.units = 'degree_east'
 
-class dataUpscaler:
+class DataUpscaler:
     def __init__(self, input_file, output_file, method='max'):
         self.input_file = input_file
         self.output_file = output_file
@@ -220,10 +220,10 @@ def main():
     downloader = GPvMSM_Downloder(start_date, end_date, download_folder) 
     downloader.download_files()  
 
-    processor = dataProcessor(2015)
+    processor = DataProcessor(2015)
     processor.process_year()
 
-    upscaler = dataUpscaler('./nc/GPvMSM/yearly_data/2015.nc', './nc/GPvMSM/yearly_data/2015_upscaled_max.nc')
+    upscaler = DataUpscaler('./nc/GPvMSM/yearly_data/2015.nc', './nc/GPvMSM/yearly_data/2015_upscaled_max.nc')
     upscaler.upscale_data()
 
     frequency = 2500  
