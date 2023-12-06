@@ -3,13 +3,16 @@ import requests
 import numpy as np
 import netCDF4 as nc
 import winsound as ws
+import logging
 
 from datetime import datetime, timedelta
 from tqdm import tqdm
 from scipy.interpolate import griddata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from config import BASE_URL, START_DATE, END_DATE, DOWNLOAD_FOLDER, INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR
+from config import BASE_URL, START_DATE, END_DATE, DOWNLOAD_FOLDER, INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR, CORRECTION_VALUE
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class GPvMSM_Downloder:
     def __init__(self, start_date, end_date, folder):
@@ -19,8 +22,35 @@ class GPvMSM_Downloder:
         self.base_url = BASE_URL
 
     def download_files(self):
-        for date in self._get_dates_in_range():
-            self._download_file_for_date(date)
+        existing_files = self._get_existing_files()
+        dates_to_download = self._get_dates_in_range()
+        missing_files = []
+
+        for date in dates_to_download:
+            if not self._is_file_downloaded(date, existing_files):
+                missing_files.append(date.strftime("%Y%m%d"))
+
+                self._download_file_for_date(date)
+
+        if missing_files:
+            logging.info(f"Missing files downloaded: {', '.join(missing_files)}")
+        else:
+            logging.info("No missing files")
+
+    def _get_existing_files(self):
+        if not os.path.exists(self.folder):
+            os.makedirs(self.folder)
+
+            return []
+        
+        return set(os.listdir(self.folder))
+
+    def _is_file_downloaded(self, date, existing_files):
+        formatted_date = date.strftime("%m%d")
+        filename = f"{date.year}{formatted_date}.nc"
+        
+        return filename in existing_files
+
             
     def _get_dates_in_range(self):
         delta = self.end_date - self.start_date
@@ -39,25 +69,19 @@ class GPvMSM_Downloder:
         local_path = os.path.join(self.folder, local_filename)
 
         with requests.get(url, stream=True) as r:
-            
             if r.status_code == 404:
-                print(f"Unable to download {local_filename}: 404 Client Error: Not Found for url: {url}")
+                logging.error(f"Unable to download {local_filename}: 404 Client Error: Not Found for url: {url}")
                 return
 
-            total = int(r.headers.get('content-length', 0))
-            
-            with open(local_path, 'wb') as file, tqdm(
-                    desc=local_filename,
-                    total=total,
-                    unit='iB',
-                    unit_scale=True,
-                    unit_divisor=1024,
-                ) as bar:
-                
-                for chunk in r.iter_content(chunk_size=1024):
-                    bar.update(file.write(chunk))
+            logging.info(f"Downloading {local_filename}")
 
-            print(f"Downloaded {local_filename}")
+            with open(local_path, 'wb') as file:
+                for chunk in r.iter_content(chunk_size=1024):
+                    if chunk:
+                        file.write(chunk)
+
+            logging.info(f"Downloaded {local_filename}")
+
 
 class DataProcessor:
     def __init__(self, year):
@@ -72,6 +96,7 @@ class DataProcessor:
         all_daily_rains = self._initialize_rain_data(days_in_year)
 
         first_file_path = os.path.join(self.base_dir, f'{self.year}0101.nc')
+        
         with nc.Dataset(first_file_path, 'r') as data:
             lat = data.variables['lat'][:]
             lon = data.variables['lon'][:]
@@ -96,6 +121,7 @@ class DataProcessor:
 
     def _process_day(self, current_date, all_daily_rains, day):
         file_path = os.path.join(self.base_dir, f'{current_date.strftime("%Y%m%d")}.nc')
+        logging.info(f"Processing file: {file_path}")
         
         if os.path.isfile(file_path):
             
@@ -119,14 +145,16 @@ class DataProcessor:
             time[:] = np.arange(1, days_in_year + 1)
             latitudes[:] = lat
             longitudes[:] = lon
-            rain[:, :, :] = all_daily_rains
+
+            corrected_rain = all_daily_rains * CORRECTION_VALUE
+            rain[:, :, :] = corrected_rain
 
             rain.units = 'mm/day'
             latitudes.units = 'degree_north'
             longitudes.units = 'degree_east'
 
 class DataUpscaler:
-    def __init__(self, input_file, output_file, method='max'):
+    def __init__(self, input_file, output_file, method='median'):
         self.input_file = input_file
         self.output_file = output_file
         self.method = method
@@ -158,21 +186,21 @@ class DataUpscaler:
         target_data = np.zeros((original_data.shape[0], len(target_lat), len(target_lon)))
         
         for t in range(original_data.shape[0]):
+            logging.info(f"Upscaling in progress {t+1}/{original_data.shape[0]}")
             
             for i, lat in enumerate(target_lat):
-                
+
                 for j, lon in enumerate(target_lon):
-                    
                     lat_mask = (original_lat >= lat - 0.25) & (original_lat < lat + 0.25)
                     lon_mask = (original_lon >= lon - 0.25) & (original_lon < lon + 0.25)
                     data_subset = original_data[t, lat_mask, :][:, lon_mask]
                     
                     if self.method == 'max':
                         target_data[t, i, j] = np.nanmax(data_subset)
-                        
+
                     elif self.method == 'median':
                         target_data[t, i, j] = np.nanmedian(data_subset)
-                        
+
                     else:
                         target_data[t, i, j] = np.nanmean(data_subset)
                         

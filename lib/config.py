@@ -11,3 +11,5 @@ DOWNLOAD_FOLDER = os.environ.get('DOWNLOAD_FOLDER')
 INPUT_FILE = os.environ.get('INPUT_FILE')
 OUTPUT_FILE = os.environ.get('OUTPUT_FILE')
 PROCESS_YEAR = os.environ.get('PROCESS_YEAR', 2015)  
+
+CORRECTION_VALUE = float(os.environ.get('CORRECTION_VALUE'))
