@@ -10,7 +10,7 @@ from tqdm import tqdm
 from scipy.interpolate import griddata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from config import BASE_URL, START_DATE, END_DATE, DOWNLOAD_FOLDER, INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR, CORRECTION_VALUE
+from config import BASE_URL, START_DATE, END_DATE, DOWNLOAD_FOLDER, INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR, CORRECTION_VALUE, UPSCALING_METHOD
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -154,7 +154,7 @@ class DataProcessor:
             longitudes.units = 'degree_east'
 
 class DataUpscaler:
-    def __init__(self, input_file, output_file, method='median'):
+    def __init__(self, input_file, output_file, method=UPSCALING_METHOD):
         self.input_file = input_file
         self.output_file = output_file
         self.method = method
