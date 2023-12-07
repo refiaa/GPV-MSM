@@ -1,12 +1,16 @@
 # GPvMSM-気象庁数値予報データ AutoDownloader - Upscailer
 
+> ## class DataProcessor、もしくは class DataUpscalerに問題あり　ー＞　緊急修正必要　！！！！！！
+
+
+
 http://database.rish.kyoto-u.ac.jp/arch/jmadata/
 
 気象庁の数値予報データGPVのダウンロード・アップスケーリングを自動化したコードです。
 
 GPvMSMや気象庁数値予報データに関するもっと詳しい情報は上記のリンクをご参照ください。
 
-##
+###
 
 GPvMSM以外のnetCDFファイルではまだ行っていませんが、対応できると思います。
 
@@ -22,7 +26,7 @@ GPvMSM_vsl_v.0.0.1.pyは結果データを可視化させるためのコード�
 
 ご参照ください。
 
-##
+###
 
 .envのUPSCALING_METHODは、アップスケーリングする時、格子の中の値のうち、出力データとしてなにを選定するのかの変数
 
