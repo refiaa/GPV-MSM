@@ -10,7 +10,7 @@ from tqdm import tqdm
 from scipy.interpolate import griddata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from config import BASE_URL, START_DATE, END_DATE, DOWNLOAD_FOLDER, INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR, CORRECTION_VALUE, UPSCALING_METHOD
+from config import BASE_URL, START_DATE, END_DATE, DOWNLOAD_FOLDER, INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR, CORRECTION_VALUE, UPSCALING_METHOD, LAT_GRID_SIZE, LON_GRID_SIZE
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -86,8 +86,8 @@ class GPvMSM_Downloder:
 class DataProcessor:
     def __init__(self, year):
         self.year = year
-        self.base_dir = f'./nc/GPvMSM/{year}/'
-        self.output_dir = './nc/GPvMSM/yearly_data/'
+        self.base_dir = f'./nc/4_GPvMSM/{year}/'
+        self.output_dir = './nc/5_GPvMSM_year/'
         
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -146,91 +146,123 @@ class DataProcessor:
             latitudes[:] = lat
             longitudes[:] = lon
 
-            corrected_rain = all_daily_rains * CORRECTION_VALUE
-            rain[:, :, :] = corrected_rain
+            rain[:, :, :] = all_daily_rains
 
             rain.units = 'mm/day'
             latitudes.units = 'degree_north'
             longitudes.units = 'degree_east'
 
-class DataUpscaler:
-    def __init__(self, input_file, output_file, method=UPSCALING_METHOD):
+class DataDownscaler:
+    def __init__(self, input_file, output_file):
         self.input_file = input_file
         self.output_file = output_file
-        self.method = method
+        self.lat_grid_size = float(LAT_GRID_SIZE)
+        self.lon_grid_size = float(LON_GRID_SIZE)
+        self.upscaling_method = UPSCALING_METHOD
+        
+        os.makedirs(os.path.dirname(self.output_file), exist_ok=True)
+        
+        self._setup_logging()
 
     def upscale_data(self):
-        r1d, lat, lon, time = self._load_data()
-        new_lat, new_lon = self._define_new_grid(lat, lon)
-        upscaled_data = self._aggregate_data(r1d, lat, lon, new_lat, new_lon)
-        
-        self._save_data(upscaled_data, new_lat, new_lon, time)
+        try:
+            r1d, lat, lon, time = self._load_data()
+            new_lat, new_lon = self._define_new_grid(lat, lon)
+            upscaled_data = self._upscale_data_method(r1d, lat, lon, new_lat, new_lon)
+            self._save_data(upscaled_data, new_lat, new_lon, time)
+            logging.info("Data upscaling completed successfully.")
+            
+        except Exception as e:
+            logging.error(f"Error during data upscaling: {e}")
 
     def _load_data(self):
-        dataset = nc.Dataset(self.input_file)
-
-        r1d = dataset.variables['r1d'][:]
-        lat = dataset.variables['lat'][:]
-        lon = dataset.variables['lon'][:]
-        time = dataset.variables['time'][:]
-        
+        with nc.Dataset(self.input_file) as dataset:
+            r1d = dataset.variables['r1d'][:]
+            lat = dataset.variables['lat'][:]
+            lon = dataset.variables['lon'][:]
+            time = dataset.variables['time'][:]
+            
         return r1d, lat, lon, time
 
     def _define_new_grid(self, lat, lon):
-        new_lat = np.arange(min(lat), max(lat), 0.5)
-        new_lon = np.arange(min(lon), max(lon), 0.5)
+        new_lat = np.arange(np.min(lat), np.max(lat), self.lat_grid_size)
+        new_lon = np.arange(np.min(lon), np.max(lon), self.lon_grid_size)
         
         return new_lat, new_lon
 
-####################################################################################################
-############################ MAYBE HAV SOME PROBLEM IN THIS LOGIC###################################
-####################################################################################################
-
-    def _aggregate_data(self, original_data, original_lat, original_lon, target_lat, target_lon):
+    def _upscale_data_method(self, original_data, original_lat, original_lon, target_lat, target_lon):
         target_data = np.zeros((original_data.shape[0], len(target_lat), len(target_lon)))
         
         for t in range(original_data.shape[0]):
-            logging.info(f"Upscaling in progress {t+1}/{original_data.shape[0]}")
-            
-            for i, lat in enumerate(target_lat):
+            for i, new_lat_val in enumerate(target_lat):
+                for j, new_lon_val in enumerate(target_lon):
+                    lat_lower_bound, lat_upper_bound = self._calculate_bounds(new_lat_val, self.lat_grid_size)
+                    lon_lower_bound, lon_upper_bound = self._calculate_bounds(new_lon_val, self.lon_grid_size)
 
-                for j, lon in enumerate(target_lon):
-                    lat_mask = (original_lat >= lat - 0.25) & (original_lat < lat + 0.25)
-                    lon_mask = (original_lon >= lon - 0.25) & (original_lon < lon + 0.25)
-                    data_subset = original_data[t, lat_mask, :][:, lon_mask]
+                    lat_in_cell = (original_lat >= lat_lower_bound) & (original_lat < lat_upper_bound)
+                    lon_in_cell = (original_lon >= lon_lower_bound) & (original_lon < lon_upper_bound)
+
+                    cell_data = original_data[t, lat_in_cell, :][:, lon_in_cell]
                     
-                    if self.method == 'max':
-                        target_data[t, i, j] = np.nanmax(data_subset)
-
-                    elif self.method == 'median':
-                        target_data[t, i, j] = np.nanmedian(data_subset)
-
-                    else:
-                        target_data[t, i, j] = np.nanmean(data_subset)
+                    if cell_data.size > 0:
+                        target_data[t, i, j] = self._aggregate_data(cell_data)
                         
+                    else:
+                        target_data[t, i, j] = np.nan
+
         return target_data
 
-####################################################################################################
+    def _calculate_bounds(self, center_val, grid_size):
+        half_grid = grid_size / 2.0
+        lower_bound = center_val - half_grid
+        upper_bound = center_val + half_grid
+        
+        return lower_bound, upper_bound
+
+    def _aggregate_data(self, cell_data):
+        if self.upscaling_method == 'max':
+            return np.nanmax(cell_data)
+        
+        elif self.upscaling_method == 'median':
+            return np.nanmedian(cell_data)
+        
+        elif self.upscaling_method == 'center':
+            return self._calculate_center_value(cell_data)
+        
+        else:  
+            return np.nanmean(cell_data)
+
+    def _calculate_center_value(self, cell_data):
+        rows, cols = cell_data.shape
+        center_row = rows // 2
+        center_col = cols // 2
+
+        if rows % 2 == 1 and cols % 2 == 1:
+            return cell_data[center_row, center_col]
+        
+        else:
+            center_values = cell_data[center_row-1:center_row+1, center_col-1:center_col+1]
+            return np.nanmean(center_values)
 
     def _save_data(self, data, lat, lon, time):
-        dataset = nc.Dataset(self.output_file, 'w', format='NETCDF4_CLASSIC')
-        
-        dataset.createDimension('time', len(time))
-        dataset.createDimension('lat', len(lat))
-        dataset.createDimension('lon', len(lon))
+        with nc.Dataset(self.output_file, 'w', format='NETCDF4_CLASSIC') as dataset:
+            dataset.createDimension('time', len(time))
+            dataset.createDimension('lat', len(lat))
+            dataset.createDimension('lon', len(lon))
+            
+            times = dataset.createVariable('time', 'f4', ('time',))
+            latitudes = dataset.createVariable('lat', 'f4', ('lat',))
+            longitudes = dataset.createVariable('lon', 'f4', ('lon',))
+            r1d = dataset.createVariable('r1d', 'f4', ('time', 'lat', 'lon',))
+            r1d.units = 'mm/day'
+            
+            times[:] = time
+            latitudes[:] = lat
+            longitudes[:] = lon
+            r1d[:, :, :] = data
 
-        times = dataset.createVariable('time', 'f4', ('time',))
-        latitudes = dataset.createVariable('lat', 'f4', ('lat',))
-        longitudes = dataset.createVariable('lon', 'f4', ('lon',))
-        r1d = dataset.createVariable('r1d', 'f4', ('time', 'lat', 'lon',))
-
-        r1d.units = 'mm/day'
-        times[:] = time
-        latitudes[:] = lat
-        longitudes[:] = lon
-        r1d[:, :, :] = data
-
-        dataset.close()
+    def _setup_logging(self):
+        logging.basicConfig(filename='downscaler.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 def main():
     start_date = datetime.strptime(START_DATE, "%Y/%m/%d")
@@ -242,7 +274,7 @@ def main():
     processor = DataProcessor(int(PROCESS_YEAR))
     processor.process_year()
 
-    upscaler = DataUpscaler(INPUT_FILE, OUTPUT_FILE)
+    upscaler = DataDownscaler(INPUT_FILE, OUTPUT_FILE)
     upscaler.upscale_data()
 
     frequency = 2500  

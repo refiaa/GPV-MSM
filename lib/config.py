@@ -13,4 +13,8 @@ OUTPUT_FILE = os.environ.get('OUTPUT_FILE')
 PROCESS_YEAR = os.environ.get('PROCESS_YEAR', 2015)  
 
 UPSCALING_METHOD=os.environ.get('UPSCALING_METHOD')
+
 CORRECTION_VALUE = float(os.environ.get('CORRECTION_VALUE'))
+
+LAT_GRID_SIZE = float(os.environ.get('LAT_GRID_SIZE'))
+LON_GRID_SIZE = float(os.environ.get('LON_GRID_SIZE'))

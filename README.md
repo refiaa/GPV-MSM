@@ -1,6 +1,6 @@
 # GPvMSM-気象庁数値予報データ AutoDownloader - Upscailer
 
-> ## class DataProcessor、もしくは class DataUpscalerに問題あり　ー＞　緊急修正必要　！！！！！！
+> ## class DataDownscalerの修正がまだ終わっていません、極力centerを使ってください。
 
 
 
@@ -31,3 +31,16 @@ GPvMSM_vsl_v.0.0.1.pyは結果データを可視化させるためのコード�
 .envのUPSCALING_METHODは、アップスケーリングする時、格子の中の値のうち、出力データとしてなにを選定するのかの変数
 
 maxは最大値で、格子ないの配列の中の最大値を利用・medianは中央値・空欄にすると平均値のデータが出力方法となる。
+
+centerとは、新しく構成したGridの空間的に真ん中に位置する数値を代表値として設定する方法です。現在、Centerには問題がないように思われます。
+
+###
+
+### 20231213
+・ファイルのdir構造が変更されました。
+
+・centerを追加しました。
+
+・class DataDownscalerを一部変更しました（＊修正中）
+
+###

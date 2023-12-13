@@ -128,7 +128,7 @@ try:
 except Exception as e:
     print(f"Fail to load shapefile: {str(e)}")
 
-BASE_NC_DIR = './nc/GPvMSM/yearly_data/'
+BASE_NC_DIR = 'PATH OF PROCESSED NC FILES'
 BASE_GIF_DIR = './plot/'
 
 nc_file = os.path.join(BASE_NC_DIR, nc_filename)
