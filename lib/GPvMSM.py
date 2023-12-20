@@ -10,7 +10,10 @@ from tqdm import tqdm
 from scipy.interpolate import griddata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from config import BASE_URL, START_DATE, END_DATE, DOWNLOAD_FOLDER, INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR, CORRECTION_VALUE, UPSCALING_METHOD, LAT_GRID_SIZE, LON_GRID_SIZE
+from config import (BASE_URL, START_DATE, END_DATE, DOWNLOAD_FOLDER, 
+                    INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR, 
+                    CORRECTION_VALUE, UPSCALING_METHOD, 
+                    LAT_GRID_SIZE, LON_GRID_SIZE, INPUT_FILE_SUM)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -24,6 +27,7 @@ class GPvMSM_Downloder:
     def download_files(self):
         existing_files = self._get_existing_files()
         dates_to_download = self._get_dates_in_range()
+
         missing_files = []
 
         for date in dates_to_download:
@@ -34,6 +38,7 @@ class GPvMSM_Downloder:
 
         if missing_files:
             logging.info(f"Missing files downloaded: {', '.join(missing_files)}")
+
         else:
             logging.info("No missing files")
 
@@ -59,6 +64,7 @@ class GPvMSM_Downloder:
 
     def _download_file_for_date(self, date):
         formatted_date = date.strftime("%m%d")
+
         url = f"{self.base_url}{date.year}/{formatted_date}.nc"
         local_filename = f"{date.year}{formatted_date}.nc"
         
@@ -66,11 +72,13 @@ class GPvMSM_Downloder:
 
     def _download_file(self, url, local_filename):
         os.makedirs(self.folder, exist_ok=True)
+
         local_path = os.path.join(self.folder, local_filename)
 
         with requests.get(url, stream=True) as r:
             if r.status_code == 404:
                 logging.error(f"Unable to download {local_filename}: 404 Client Error: Not Found for url: {url}")
+
                 return
 
             logging.info(f"Downloading {local_filename}")
@@ -82,16 +90,22 @@ class GPvMSM_Downloder:
 
             logging.info(f"Downloaded {local_filename}")
 
-
 class DataProcessor:
     def __init__(self, year):
         self.year = year
-        self.base_dir = f'./nc/4_GPvMSM/{year}/'
-        self.output_dir = './nc/5_GPvMSM_year/'
+        self.base_dir = f'./nc/GPvMSM/{year}/'
+        self.output_dir = './nc/GPvMSM_year/'
         
         os.makedirs(self.output_dir, exist_ok=True)
 
     def process_year(self):
+        output_file_path = os.path.join(self.output_dir, f'{self.year}.nc')
+        
+        if os.path.isfile(output_file_path):
+            logging.info(f"process skipped for {self.year} file already exists ")
+            
+            return
+
         days_in_year = 366 if DataProcessor._is_leap_year(self.year) else 365
         all_daily_rains = self._initialize_rain_data(days_in_year)
 
@@ -121,6 +135,7 @@ class DataProcessor:
 
     def _process_day(self, current_date, all_daily_rains, day):
         file_path = os.path.join(self.base_dir, f'{current_date.strftime("%Y%m%d")}.nc')
+
         logging.info(f"Processing file: {file_path}")
         
         if os.path.isfile(file_path):
@@ -152,37 +167,130 @@ class DataProcessor:
             latitudes.units = 'degree_north'
             longitudes.units = 'degree_east'
 
+class getYearSum:
+    def __init__(self, input_file):
+        self.input_file = input_file
+        self.nc_file = nc.Dataset(input_file, mode='r')
+        self.lat = self.nc_file.variables['lat'][:]
+        self.lon = self.nc_file.variables['lon'][:]
+        self.time = self.nc_file.variables['time'][:]
+        self.r1d = self.nc_file.variables['r1d'][:]
+        self.reference_date = None
+
+        input_file_name = os.path.basename(input_file)
+        output_file_name = f"{input_file_name.split('.')[0]}_sum.nc"
+        
+        self.output_file = os.path.join(os.path.dirname(input_file), output_file_name)
+
+        self.skip_processing = os.path.isfile(self.output_file)
+        
+        if self.skip_processing:
+            logging.info(f"SUM : Output file already exists. Skipping processing.")
+            
+        else:
+            logging.info(f"SUM : Processing {self.input_file} to create {self.output_file}")
+
+    def aggregate_annual_data(self):
+        if self.skip_processing:
+            return None
+        
+        logging.info("SUM : Starting to aggregate annual data.")
+        
+        total_sum = np.zeros((len(self.lat), len(self.lon)))
+
+        for time_idx in range(len(self.time)):
+            current_day = int(self.time[time_idx])
+            
+            logging.info(f"Processing day: {current_day}")
+
+            for lat_idx in range(len(self.lat)):
+                for lon_idx in range(len(self.lon)):
+                    total_sum[lat_idx, lon_idx] += self.r1d[time_idx, lat_idx, lon_idx]
+
+        logging.info("SUM : Annual data aggregation completed.")
+        
+        return {'yearly_sum': total_sum}
+
+    def convert_time_to_date(self):
+        return [datetime(int(PROCESS_YEAR), 1, 1) + timedelta(days=int(day - 1)) for day in self.time]
+
+    def get_max_value(self, annual_data):
+            max_value = max([np.max(annual_data[year]) for year in annual_data])
+
+            return max_value
+
+    def save_to_new_file(self, annual_data):
+        if self.skip_processing or annual_data is None:
+            logging.info(f"SUM : Skipping saving sum process file already exists")
+            
+            return
+        
+        logging.info("SUM : Saving aggregated data to file: %s", self.output_file)
+
+        with nc.Dataset(self.output_file, 'w', format='NETCDF4') as new_nc:
+            new_nc.createDimension('lat', len(self.lat))
+            new_nc.createDimension('lon', len(self.lon))
+            new_nc.createDimension('time', 1)
+
+            latitudes = new_nc.createVariable('lat', 'f4', ('lat',))
+            longitudes = new_nc.createVariable('lon', 'f4', ('lon',))
+            time = new_nc.createVariable('time', 'i4', ('time',))
+            r1y = new_nc.createVariable('r1y', 'f4', ('time', 'lat', 'lon',))
+            max_val_var = new_nc.createVariable('max_value', 'f4')
+
+            max_val_var.units = 'mm/yr'
+            max_val_var[:] = self.get_max_value(annual_data)
+
+            latitudes[:] = self.lat
+            longitudes[:] = self.lon
+            time[:] = [int(PROCESS_YEAR)]
+            r1y[0, :, :] = annual_data['yearly_sum']
+
+            latitudes.units = 'degree_north'
+            longitudes.units = 'degree_east'
+            time.units = 'years'
+            r1y.units = 'mm/yr'
+
+            new_nc.description = "Annual aggregated precipitation data"
+            
+            logging.info("SUM : Data saved successfully to %s", self.output_file)
+
 class DataDownscaler:
     def __init__(self, input_file, output_file):
         self.input_file = input_file
         self.output_file = output_file
+
         self.lat_grid_size = float(LAT_GRID_SIZE)
         self.lon_grid_size = float(LON_GRID_SIZE)
+
         self.upscaling_method = UPSCALING_METHOD
         
         os.makedirs(os.path.dirname(self.output_file), exist_ok=True)
         
         self._setup_logging()
 
-    def upscale_data(self):
+    def downscale_data(self):
         try:
-            r1d, lat, lon, time = self._load_data()
+            r1y, lat, lon, time = self._load_data()
             new_lat, new_lon = self._define_new_grid(lat, lon)
-            upscaled_data = self._upscale_data_method(r1d, lat, lon, new_lat, new_lon)
-            self._save_data(upscaled_data, new_lat, new_lon, time)
-            logging.info("Data upscaling completed successfully.")
+            downscaled_data = self._downscale_data_method(r1y, lat, lon, new_lat, new_lon)
+            self._save_data(downscaled_data, new_lat, new_lon, time)
+
+            logging.info("Data downscaling completed successfully.")
             
         except Exception as e:
-            logging.error(f"Error during data upscaling: {e}")
+            logging.error(f"Error during data downscaling: {e}")
 
     def _load_data(self):
         with nc.Dataset(self.input_file) as dataset:
-            r1d = dataset.variables['r1d'][:]
+            r1y = dataset.variables['r1y'][:]
             lat = dataset.variables['lat'][:]
             lon = dataset.variables['lon'][:]
             time = dataset.variables['time'][:]
             
-        return r1d, lat, lon, time
+        logging.info("Dataset opened successfully.")
+        
+        return r1y, lat, lon, time
 
     def _define_new_grid(self, lat, lon):
         new_lat = np.arange(np.min(lat), np.max(lat), self.lat_grid_size)
@@ -190,25 +298,24 @@ class DataDownscaler:
         
         return new_lat, new_lon
 
-    def _upscale_data_method(self, original_data, original_lat, original_lon, target_lat, target_lon):
-        target_data = np.zeros((original_data.shape[0], len(target_lat), len(target_lon)))
+    def _downscale_data_method(self, original_data, original_lat, original_lon, target_lat, target_lon):
+        target_data = np.zeros((len(target_lat), len(target_lon)))
         
-        for t in range(original_data.shape[0]):
-            for i, new_lat_val in enumerate(target_lat):
-                for j, new_lon_val in enumerate(target_lon):
-                    lat_lower_bound, lat_upper_bound = self._calculate_bounds(new_lat_val, self.lat_grid_size)
-                    lon_lower_bound, lon_upper_bound = self._calculate_bounds(new_lon_val, self.lon_grid_size)
+        for i, new_lat_val in enumerate(target_lat):
+            for j, new_lon_val in enumerate(target_lon):
+                lat_lower_bound, lat_upper_bound = self._calculate_bounds(new_lat_val, self.lat_grid_size)
+                lon_lower_bound, lon_upper_bound = self._calculate_bounds(new_lon_val, self.lon_grid_size)
 
-                    lat_in_cell = (original_lat >= lat_lower_bound) & (original_lat < lat_upper_bound)
-                    lon_in_cell = (original_lon >= lon_lower_bound) & (original_lon < lon_upper_bound)
+                lat_in_cell = (original_lat >= lat_lower_bound) & (original_lat < lat_upper_bound)
+                lon_in_cell = (original_lon >= lon_lower_bound) & (original_lon < lon_upper_bound)
 
-                    cell_data = original_data[t, lat_in_cell, :][:, lon_in_cell]
+                cell_data = original_data[:, lat_in_cell, :][:, :, lon_in_cell]
+                
+                if cell_data.size > 0:
+                    target_data[i, j] = self._aggregate_data(cell_data)
                     
-                    if cell_data.size > 0:
-                        target_data[t, i, j] = self._aggregate_data(cell_data)
-                        
-                    else:
-                        target_data[t, i, j] = np.nan
+                else:
+                    target_data[i, j] = np.nan
 
         return target_data
 
@@ -234,6 +341,7 @@ class DataDownscaler:
 
     def _calculate_center_value(self, cell_data):
         rows, cols = cell_data.shape
+
         center_row = rows // 2
         center_col = cols // 2
 
@@ -244,22 +352,36 @@ class DataDownscaler:
             center_values = cell_data[center_row-1:center_row+1, center_col-1:center_col+1]
             return np.nanmean(center_values)
 
+    def get_max_value(self, downscaled_data):
+        return np.nanmax(downscaled_data)
+
     def _save_data(self, data, lat, lon, time):
-        with nc.Dataset(self.output_file, 'w', format='NETCDF4_CLASSIC') as dataset:
-            dataset.createDimension('time', len(time))
-            dataset.createDimension('lat', len(lat))
-            dataset.createDimension('lon', len(lon))
-            
-            times = dataset.createVariable('time', 'f4', ('time',))
-            latitudes = dataset.createVariable('lat', 'f4', ('lat',))
-            longitudes = dataset.createVariable('lon', 'f4', ('lon',))
-            r1d = dataset.createVariable('r1d', 'f4', ('time', 'lat', 'lon',))
-            r1d.units = 'mm/day'
-            
-            times[:] = time
+        with nc.Dataset(self.output_file, 'w', format='NETCDF4') as new_nc:
+            new_nc.createDimension('lat', len(lat))
+            new_nc.createDimension('lon', len(lon))
+            new_nc.createDimension('time', len(time))
+
+            latitudes = new_nc.createVariable('lat', 'f4', ('lat',))
+            longitudes = new_nc.createVariable('lon', 'f4', ('lon',))
+            times = new_nc.createVariable('time', 'i4', ('time',))
+            r1y = new_nc.createVariable('r1y', 'f4', ('time', 'lat', 'lon',))
+            max_val_var = new_nc.createVariable('max_value', 'f4')
+
+            max_val_var.units = 'mm/yr'
+            max_val_var[:] = self.get_max_value(data)
+
             latitudes[:] = lat
             longitudes[:] = lon
-            r1d[:, :, :] = data
+            times[:] = time
+            r1y[:, :] = data
+
+            latitudes.units = 'degree_north'
+            longitudes.units = 'degree_east'
+            times.units = 'years'
+            r1y.units = 'mm/yr'
+
+            new_nc.description = "Downscaled annual precipitation data"
+            logging.info("Data saved successfully to %s", self.output_file)
 
     def _setup_logging(self):
         logging.basicConfig(filename='downscaler.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -274,8 +396,12 @@ def main():
     processor = DataProcessor(int(PROCESS_YEAR))
     processor.process_year()
 
-    upscaler = DataDownscaler(INPUT_FILE, OUTPUT_FILE)
-    upscaler.upscale_data()
+    aggregator = getYearSum(INPUT_FILE)
+    annual_sum = aggregator.aggregate_annual_data()
+    aggregator.save_to_new_file(annual_sum) 
+
+    downscaler = DataDownscaler(INPUT_FILE_SUM, OUTPUT_FILE)
+    downscaler.downscale_data()
 
     frequency = 2500  
     duration = 500  

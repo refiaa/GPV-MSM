@@ -9,6 +9,7 @@ START_DATE = os.environ.get('START_DATE')
 END_DATE = os.environ.get('END_DATE')
 DOWNLOAD_FOLDER = os.environ.get('DOWNLOAD_FOLDER')
 INPUT_FILE = os.environ.get('INPUT_FILE')
+INPUT_FILE_SUM = os.environ.get('INPUT_FILE_SUM')
 OUTPUT_FILE = os.environ.get('OUTPUT_FILE')
 PROCESS_YEAR = os.environ.get('PROCESS_YEAR', 2015)  
 
