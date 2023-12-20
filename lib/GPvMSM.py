@@ -378,9 +378,12 @@ class DataDownscaler:
             latitudes.units = 'degree_north'
             longitudes.units = 'degree_east'
             times.units = 'years'
+            
+            r1y.standard_name ='precipitation_flux' 
+            r1y.long_name = 'Precipitation'
             r1y.units = 'mm/yr'
-
-            new_nc.description = "Downscaled annual precipitation data"
+            
+            new_nc.description = "Downscaled GPVMSM annual precipitation data"
             logging.info("Data saved successfully to %s", self.output_file)
 
     def _setup_logging(self):
