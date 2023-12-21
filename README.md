@@ -6,6 +6,11 @@ http://database.rish.kyoto-u.ac.jp/arch/jmadata/
 
 GPvMSMや気象庁数値予報データに関するもっと詳しい情報は上記のリンクをご参照ください。
 
+実行の前にternimalにて次のコマンドを実行してください
+
+> pip install -r requirements.txt
+
+
 ##
 
 ### 20231213
@@ -34,6 +39,8 @@ GPvMSMや気象庁数値予報データに関するもっと詳しい情報は�
 ・config.pyを一部変更
 
 ・.env、config.py、GPvMSM.pyのupscaleをdownscaleに環境変数名を修正
+
+・requirements.txtを追加
 
 ##
 
