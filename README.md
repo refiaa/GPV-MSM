@@ -1,4 +1,13 @@
-# GPvMSM-気象庁数値予報データ AutoDownloader - Downscaler
+
+
+<h1 align="center">GPvMSM-気象庁数値予報データ AutoDownloader - Downscaler</h1>
+<em><h5 align="center">(Programming Language - Python 3)</h5></em>
+
+<p align="center">
+<a href="#"><img alt="GPvMSM_Beta last commit (main)" src="https://img.shields.io/github/last-commit/refiaa/GPvMSM_Beta/main?color=green&style=for-the-badge"></a>
+<a href="#"><img alt="GPvMSM_Beta Repo stars" src="https://img.shields.io/github/stars/refiaa/GPvMSM_Beta?style=for-the-badge&color=yellow"></a>
+<a href="#"><img alt="GPvMSM_Beta License" src="https://img.shields.io/github/license/refiaa/GPvMSM_Beta?color=orange&style=for-the-badge"></a>
+
 
 http://database.rish.kyoto-u.ac.jp/arch/jmadata/
 
@@ -6,9 +15,18 @@ http://database.rish.kyoto-u.ac.jp/arch/jmadata/
 
 GPvMSMや気象庁数値予報データに関するもっと詳しい情報は上記のリンクをご参照ください。
 
-実行の前にternimalにて次のコマンドを実行してください
+**Clone and Install Script**
 
-> **pip install -r requirements.txt**
+```shell script
+git clone https://github.com/refiaa/GPvMSM_Beta.git
+cd GPvMSM_Beta
+pip install -r requirements.txt
+```
+
+
+ ## 実行結果(2015年)
+
+![2015_max](https://github.com/refiaa/GPvMSM_Beta/assets/112306763/22543f54-3ed7-40b1-ae2a-85d9674f7d8d)
 
 
 ##
@@ -47,7 +65,7 @@ GPvMSMや気象庁数値予報データに関するもっと詳しい情報は�
 
 ファイルのディレクトリ構造は以下のようになりますのでご参照ください。
 
-```
+```shell script
 GPvMSM_Beta
 ├─lib
 ├─nc
