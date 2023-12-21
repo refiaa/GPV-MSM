@@ -90,10 +90,10 @@ class GPvMSM_Downloder:
                         file.write(chunk)
 
 class DataProcessor:
-    def __init__(self, year):
+    def __init__(self, year, download_folder, input_file):
         self.year = year
-        self.base_dir = f'./nc/GPvMSM/{year}/'
-        self.output_dir = './nc/GPvMSM_year/'
+        self.base_dir = download_folder
+        self.output_dir = os.path.dirname(input_file)
         
         os.makedirs(self.output_dir, exist_ok=True)
 
@@ -397,9 +397,9 @@ def main():
     downloader = GPvMSM_Downloder(start_date, end_date, DOWNLOAD_FOLDER) 
     downloader.download_files()  
 
-    processor = DataProcessor(int(PROCESS_YEAR))
+    processor = DataProcessor(int(PROCESS_YEAR), DOWNLOAD_FOLDER, INPUT_FILE)
     processor.process_year()
-
+    
     aggregator = getYearSum(INPUT_FILE)
     annual_sum = aggregator.aggregate_annual_data()
     aggregator.save_to_new_file(annual_sum) 
