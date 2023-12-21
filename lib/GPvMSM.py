@@ -76,28 +76,17 @@ class GPvMSM_Downloder:
 
         local_path = os.path.join(self.folder, local_filename)
 
-        try:
-            with requests.get(url, stream=True) as r:
-                if r.status_code == 404:
-                    logging.error(f"Unable to download {local_filename}: 404 Client Error: Not Found for url: {url}")
-                    return
-                
-                elif r.status_code != 200:
-                    logging.error(f"Error downloading {local_filename}: HTTP status code {r.status_code}")
-                    return
+        with requests.get(url, stream=True) as r:
+            if r.status_code == 404:
+                logging.error(f"Unable to download {local_filename}: 404 Client Error: Not Found for url: {url}")
+                return
 
-                logging.info(f"Downloading and compressing {local_filename}")
+            logging.info(f"Downloading {local_filename}")
 
-                with gzip.open(local_path + '.gz', 'wb') as file:
-                    for chunk in r.iter_content(chunk_size=1024):
-                        if chunk:
-                            file.write(chunk)
-
-        except requests.RequestException as e:
-            logging.error(f"Request error occurred while downloading {local_filename}: {e}")
-
-        except IOError as e:
-            logging.error(f"IO error occurred while writing to {local_filename}: {e}")
+            with open(local_path, 'wb') as file:
+                for chunk in r.iter_content(chunk_size=1024):
+                    if chunk:
+                        file.write(chunk)
 
 class DataProcessor:
     def __init__(self, year, download_folder, input_file):
