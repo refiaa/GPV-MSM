@@ -11,9 +11,14 @@
 
 http://database.rish.kyoto-u.ac.jp/arch/jmadata/
 
-気象庁の数値予報データGPVのダウンロード・アップスケーリングを自動化したコードです。
-
+気象庁の数値予報データGPVのダウンロード・集計・ダウンスケーリングを自動化したコードです。
 GPvMSMや気象庁数値予報データに関するもっと詳しい情報は上記のリンクをご参照ください。
+
+YYYY.ncは一年間の日単位データです。
+
+YYYY_sum.ncは一年合計雨量データです。
+
+YYYY_max.ncはダウンスケーリングデータです。
 
 **Clone and Install Script**
 
