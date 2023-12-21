@@ -8,7 +8,7 @@ GPvMSMや気象庁数値予報データに関するもっと詳しい情報は�
 
 実行の前にternimalにて次のコマンドを実行してください
 
-> pip install -r requirements.txt
+> **pip install -r requirements.txt**
 
 
 ##
