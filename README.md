@@ -1,6 +1,6 @@
 
 
-<h1 align="center">GPvMSM-気象庁数値予報データ AutoDownloader - Downscaler</h1>
+<h1 align="center">GPv-MSM AutoDownloader - Downscaler</h1>
 <em><h5 align="center">(Programming Language - Python 3)</h5></em>
 
 <p align="center">
