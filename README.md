@@ -69,7 +69,7 @@ GPvMSM_Beta
 ・出力ncファイルに変数 max_value を追加 (降水量配列の最大値)
 
 ### 20231221
-・GPvMSM_vsl_v.0.0.1の実行の結果に varibale nameが目盛りに表示されるように変更
+・GPvMSM_vsl_v.0.0.1の実行の結果に variable nameが目盛りに表示されるように変更
 
 ・GPvMSM.pyの実行の際、ディレクトリを生成できるように変更
 
