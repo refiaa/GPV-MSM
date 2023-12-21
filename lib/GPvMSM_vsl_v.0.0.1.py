@@ -76,10 +76,12 @@ class NCDataProcessor:
             self.world.boundary.plot(ax=ax, linewidth=1, color='k')
 
         im = ax.imshow(year_data[::-1, :], extent=(self.LON_RANGE[0], self.LON_RANGE[1], self.LAT_RANGE[0], self.LAT_RANGE[1]), cmap=self.color_map, alpha=self.TRANSPARENCY, vmax=self.MAX_VALUE)
-
         with nc.Dataset(nc_file) as dataset:
             variable_name = list(dataset.variables.keys())[3]
             variable_units = dataset.variables[variable_name].units
+
+            time_var = dataset.variables['time']
+            year = int(time_var[0])
         colorbar = fig.colorbar(im, ax=ax, label=f'{variable_name} ({variable_units})')
         
         title_text = f'Year: {year}'
