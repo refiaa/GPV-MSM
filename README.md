@@ -21,7 +21,7 @@ YYYY.ncは一年間の日単位データです。
 
 YYYY_sum.ncは一年合計雨量データです。
 
-YYYY_max.ncはダウンスケーリングデータです。
+YYYY_DOWNSCALING_METHOD.ncはダウンスケーリングデータです。
 
 **Clone and Install Script**
 
@@ -32,12 +32,27 @@ pip install -r requirements.txt
 ```
 
 
+**File Tree Structure**
+
+ファイルのディレクトリ構造は以下のようになりますのでご参照ください。
+```shell script
+GPvMSM_Beta
+├─lib
+├─nc
+│  ├─GPvMSM
+│  │  └─YYYY             # YYYYMMDD.nc
+│  ├─GPvMSM_DownScaled   # YYYY_DOWNSCALING_METHOD.nc
+│  └─GPvMSM_year         # YYYY.nc, YYYY_sum.nc
+├─plot                   # YYYY_DOWNSCALING_METHOD.png
+└─shp
+```
+
  ## 実行結果(2015年)
 
 ![2015_max](https://github.com/refiaa/GPvMSM_Beta/assets/112306763/22543f54-3ed7-40b1-ae2a-85d9674f7d8d)
 
 
-##
+## 変更ログ
 
 ### 20231213
 ・ファイルのdir構造が変更されました。
@@ -71,16 +86,4 @@ pip install -r requirements.txt
 ##
 
 
-ファイルのディレクトリ構造は以下のようになりますのでご参照ください。
 
-```shell script
-GPvMSM_Beta
-├─lib
-├─nc
-│  ├─GPvMSM
-│  │  └─2015 
-│  ├─GPvMSM_DownScaled
-│  └─GPvMSM_year
-├─plot
-└─shp
-```
