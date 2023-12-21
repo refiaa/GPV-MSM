@@ -47,7 +47,7 @@ pip install -r requirements.txt
 ・class DataDownscalerを一部変更しました（＊修正中）
 
 ### 20231220
-・downscaleの定常動作を確認
+・downscaleの正常動作を確認
 
 ・getYearSum Classを追加
 
