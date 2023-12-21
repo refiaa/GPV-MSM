@@ -4,10 +4,13 @@
 <em><h5 align="center">(Programming Language - Python 3)</h5></em>
 
 <p align="center">
+
+<p align="center">
+<a href="#"><img alt="GPvMSM_Beta forks" src="https://img.shields.io/github/forks/refiaa/GPvMSM_Beta?style=for-the-badge"></a>
 <a href="#"><img alt="GPvMSM_Beta last commit (main)" src="https://img.shields.io/github/last-commit/refiaa/GPvMSM_Beta/main?color=green&style=for-the-badge"></a>
 <a href="#"><img alt="GPvMSM_Beta Repo stars" src="https://img.shields.io/github/stars/refiaa/GPvMSM_Beta?style=for-the-badge&color=yellow"></a>
 <a href="#"><img alt="GPvMSM_Beta License" src="https://img.shields.io/github/license/refiaa/GPvMSM_Beta?color=orange&style=for-the-badge"></a>
-
+<a href="https://github.com/refiaa/GPvMSM_Beta/issues"><img alt="GPvMSM_Beta issues" src="https://img.shields.io/github/issues/refiaa/GPvMSM_Beta?color=purple&style=for-the-badge"></a>
 
 http://database.rish.kyoto-u.ac.jp/arch/jmadata/
 
