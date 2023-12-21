@@ -33,6 +33,8 @@ GPvMSMや気象庁数値予報データに関するもっと詳しい情報は�
 
 ・config.pyを一部変更
 
+・.env、config.py、GPvMSM.pyのupscaleをdownscaleに環境変数名を修正
+
 ##
 
 

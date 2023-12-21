@@ -12,7 +12,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from config import (BASE_URL, START_DATE, END_DATE, DOWNLOAD_FOLDER, 
                     INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR, 
-                    CORRECTION_VALUE, UPSCALING_METHOD, 
+                    CORRECTION_VALUE, DOWNSCALING_METHOD, 
                     LAT_GRID_SIZE, LON_GRID_SIZE, INPUT_FILE_SUM)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -261,7 +261,7 @@ class DataDownscaler:
         self.lat_grid_size = float(LAT_GRID_SIZE)
         self.lon_grid_size = float(LON_GRID_SIZE)
 
-        self.upscaling_method = UPSCALING_METHOD
+        self.downscaling_method = DOWNSCALING_METHOD
         
         os.makedirs(os.path.dirname(self.output_file), exist_ok=True)
         
@@ -328,13 +328,13 @@ class DataDownscaler:
         return lower_bound, upper_bound
 
     def _aggregate_data(self, cell_data):
-        if self.upscaling_method == 'max':
+        if self.downscaling_method == 'max':
             return np.nanmax(cell_data)
         
-        elif self.upscaling_method == 'median':
+        elif self.downscaling_method == 'median':
             return np.nanmedian(cell_data)
         
-        elif self.upscaling_method == 'center':
+        elif self.downscaling_method == 'center':
             return self._calculate_center_value(cell_data)
         
         else:  
