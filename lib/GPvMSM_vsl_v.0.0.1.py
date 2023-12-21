@@ -80,9 +80,8 @@ class NCDataProcessor:
         with nc.Dataset(nc_file) as dataset:
             variable_name = list(dataset.variables.keys())[3]
             variable_units = dataset.variables[variable_name].units
-        colorbar = fig.colorbar(im, ax=ax, label=f'Variable ({variable_units})')
+        colorbar = fig.colorbar(im, ax=ax, label=f'{variable_name} ({variable_units})')
         
-
         title_text = f'Year: {year}'
         title_text += f', Max Value: {max_value}'
 

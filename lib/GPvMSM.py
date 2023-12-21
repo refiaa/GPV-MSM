@@ -45,7 +45,6 @@ class GPvMSM_Downloder:
     def _get_existing_files(self):
         if not os.path.exists(self.folder):
             os.makedirs(self.folder)
-
             return []
         
         return set(os.listdir(self.folder))
@@ -59,15 +58,18 @@ class GPvMSM_Downloder:
             
     def _get_dates_in_range(self):
         delta = self.end_date - self.start_date
-        
+
         return [self.start_date + timedelta(days=i) for i in range(delta.days + 1)]
 
     def _download_file_for_date(self, date):
         formatted_date = date.strftime("%m%d")
-
         url = f"{self.base_url}{date.year}/{formatted_date}.nc"
         local_filename = f"{date.year}{formatted_date}.nc"
-        
+        local_path = os.path.join(self.folder, local_filename)
+
+        if not os.path.exists(os.path.dirname(local_path)):
+            os.makedirs(os.path.dirname(local_path))
+
         self._download_file(url, local_filename)
 
     def _download_file(self, url, local_filename):
@@ -78,7 +80,6 @@ class GPvMSM_Downloder:
         with requests.get(url, stream=True) as r:
             if r.status_code == 404:
                 logging.error(f"Unable to download {local_filename}: 404 Client Error: Not Found for url: {url}")
-
                 return
 
             logging.info(f"Downloading {local_filename}")
@@ -87,8 +88,6 @@ class GPvMSM_Downloder:
                 for chunk in r.iter_content(chunk_size=1024):
                     if chunk:
                         file.write(chunk)
-
-            logging.info(f"Downloaded {local_filename}")
 
 class DataProcessor:
     def __init__(self, year):
@@ -103,7 +102,6 @@ class DataProcessor:
         
         if os.path.isfile(output_file_path):
             logging.info(f"process skipped for {self.year} file already exists ")
-            
             return
 
         days_in_year = 366 if DataProcessor._is_leap_year(self.year) else 365
@@ -135,6 +133,9 @@ class DataProcessor:
 
     def _process_day(self, current_date, all_daily_rains, day):
         file_path = os.path.join(self.base_dir, f'{current_date.strftime("%Y%m%d")}.nc')
+
+        if not os.path.exists(os.path.dirname(file_path)):
+            os.makedirs(os.path.dirname(file_path))
 
         logging.info(f"Processing file: {file_path}")
         
@@ -208,7 +209,6 @@ class getYearSum:
                     total_sum[lat_idx, lon_idx] += self.r1d[time_idx, lat_idx, lon_idx]
 
         logging.info("SUM : Annual data aggregation completed.")
-        
         return {'yearly_sum': total_sum}
 
     def convert_time_to_date(self):
@@ -216,13 +216,11 @@ class getYearSum:
 
     def get_max_value(self, annual_data):
             max_value = max([np.max(annual_data[year]) for year in annual_data])
-
             return max_value
 
     def save_to_new_file(self, annual_data):
         if self.skip_processing or annual_data is None:
             logging.info(f"SUM : Skipping saving sum process file already exists")
-            
             return
         
         logging.info("SUM : Saving aggregated data to file: %s", self.output_file)
@@ -282,6 +280,9 @@ class DataDownscaler:
             logging.error(f"Error during data downscaling: {e}")
 
     def _load_data(self):
+        if not os.path.exists(os.path.dirname(self.input_file)):
+            os.makedirs(os.path.dirname(self.input_file))
+
         with nc.Dataset(self.input_file) as dataset:
             r1y = dataset.variables['r1y'][:]
             lat = dataset.variables['lat'][:]
