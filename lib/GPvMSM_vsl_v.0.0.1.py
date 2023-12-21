@@ -80,6 +80,10 @@ class NCDataProcessor:
         with nc.Dataset(nc_file) as dataset:
             variable_name = list(dataset.variables.keys())[3]
             variable_units = dataset.variables[variable_name].units
+
+            time_var = dataset.variables['time']
+            year = int(time_var[0])
+
         colorbar = fig.colorbar(im, ax=ax, label=f'{variable_name} ({variable_units})')
         
         title_text = f'Year: {year}'
