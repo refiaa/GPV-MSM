@@ -12,8 +12,7 @@ from scipy.interpolate import griddata
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from config import (BASE_URL, START_DATE, END_DATE, DOWNLOAD_FOLDER, 
-                    INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR, 
-                    CORRECTION_VALUE, DOWNSCALING_METHOD, 
+                    INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR, DOWNSCALING_METHOD, 
                     LAT_GRID_SIZE, LON_GRID_SIZE, INPUT_FILE_SUM)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -82,6 +81,7 @@ class GPvMSM_Downloder:
                 if r.status_code == 404:
                     logging.error(f"Unable to download {local_filename}: 404 Client Error: Not Found for url: {url}")
                     return
+                
                 elif r.status_code != 200:
                     logging.error(f"Error downloading {local_filename}: HTTP status code {r.status_code}")
                     return
