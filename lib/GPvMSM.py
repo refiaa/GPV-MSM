@@ -4,15 +4,12 @@ import numpy as np
 import netCDF4 as nc
 import winsound as ws
 import logging
-import gzip
 
 from datetime import datetime, timedelta
-from tqdm import tqdm
 from scipy.interpolate import griddata
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from config import (BASE_URL, START_DATE, END_DATE, DOWNLOAD_FOLDER, 
-                    INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR, DOWNSCALING_METHOD, 
+                    INPUT_FILE, OUTPUT_FILE, PROCESS_YEAR, DOWNSCALING_METHOD, COLLECTION_VALUE,
                     LAT_GRID_SIZE, LON_GRID_SIZE, INPUT_FILE_SUM)
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -343,17 +340,17 @@ class DataDownscaler:
             raise ValueError(f"Invalid downscaling method: {self.downscaling_method}")
 
     def _calculate_center_value(self, cell_data):
-        rows, cols = cell_data.shape
+        _, rows, cols = cell_data.shape  
 
         center_row = rows // 2
         center_col = cols // 2
 
         if rows % 2 == 1 and cols % 2 == 1:
-            return cell_data[center_row, center_col]
+            return cell_data[:, center_row, center_col]
         
         else:
-            center_values = cell_data[center_row-1:center_row+1, center_col-1:center_col+1]
-            return np.nanmean(center_values)
+            center_values = cell_data[:, center_row-1:center_row+1, center_col-1:center_col+1]
+            return np.nanmean(center_values, axis=(1, 2))
 
     def get_max_value(self, downscaled_data):
         return np.nanmax(downscaled_data)

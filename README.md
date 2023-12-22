@@ -81,6 +81,9 @@ GPvMSM_Beta
 
 ・requirements.txtを追加
 
+### 20231222
+・class DataDownscalerの関数の配列の次元入力問題を修正
+
 ##
 
 

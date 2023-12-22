@@ -18,3 +18,4 @@ OUTPUT_FILE = f'./nc/GPvMSM_DownScaled/{PROCESS_YEAR}_{DOWNSCALING_METHOD}.nc'
 
 LAT_GRID_SIZE = float(os.environ.get('LAT_GRID_SIZE', 0.50))
 LON_GRID_SIZE = float(os.environ.get('LON_GRID_SIZE', 0.50))
+COLLECTION_VALUE = float(os.environ.get('COLLECTION_VALUE', 1))
