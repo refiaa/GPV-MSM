@@ -329,15 +329,18 @@ class DataDownscaler:
     def _aggregate_data(self, cell_data):
         if self.downscaling_method == 'max':
             return np.nanmax(cell_data)
-        
+
         elif self.downscaling_method == 'median':
             return np.nanmedian(cell_data)
-        
+
         elif self.downscaling_method == 'center':
             return self._calculate_center_value(cell_data)
-        
-        else:  
+
+        elif self.downscaling_method == 'mean':
             return np.nanmean(cell_data)
+
+        else:
+            raise ValueError(f"Invalid downscaling method: {self.downscaling_method}")
 
     def _calculate_center_value(self, cell_data):
         rows, cols = cell_data.shape
