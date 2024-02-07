@@ -24,18 +24,15 @@ class GPvMSM_Downloder:
     def download_files(self):
         existing_files = self._get_existing_files()
         dates_to_download = self._get_dates_in_range()
-
         missing_files = []
 
         for date in dates_to_download:
             if not self._is_file_downloaded(date, existing_files):
                 missing_files.append(date.strftime("%Y%m%d"))
-
-                self._download_file_for_date(date)
+                self._download_file_with_retry(date)
 
         if missing_files:
             logging.info(f"Missing files downloaded: {', '.join(missing_files)}")
-
         else:
             logging.info("No missing files")
 
@@ -57,7 +54,17 @@ class GPvMSM_Downloder:
 
         return [self.start_date + timedelta(days=i) for i in range(delta.days + 1)]
 
-    def _download_file_for_date(self, date):
+    def _download_file_with_retry(self, date, attempts=3):
+        try:
+            self._download_file_for_date(date)
+        except requests.exceptions.Timeout as e:
+            if attempts > 0:
+                logging.warning(f"Download timed out for {date}. Retrying... Attempts left: {attempts}")
+                self._download_file_with_retry(date, attempts - 1)
+            else:
+                logging.error(f"Failed to download file for {date} after multiple attempts.")
+
+    def _download_file_for_date(self, date, timeout=60):
         formatted_date = date.strftime("%m%d")
         url = f"{self.base_url}{date.year}/{formatted_date}.nc"
         local_filename = f"{date.year}{formatted_date}.nc"
@@ -66,7 +73,16 @@ class GPvMSM_Downloder:
         if not os.path.exists(os.path.dirname(local_path)):
             os.makedirs(os.path.dirname(local_path))
 
-        self._download_file(url, local_filename)
+        with requests.get(url, stream=True, timeout=timeout) as r:
+            if r.status_code == 404:
+                logging.error(f"Unable to download {local_filename}: 404 Client Error: Not Found for url: {url}")
+                return
+
+            logging.info(f"Downloading {local_filename}")
+            with open(local_path, 'wb') as file:
+                for chunk in r.iter_content(chunk_size=1024):
+                    if chunk:
+                        file.write(chunk)
 
     def _download_file(self, url, local_filename):
         os.makedirs(self.folder, exist_ok=True)
