@@ -10,8 +10,6 @@
 <a href="#"><img alt="GPvMSM_Beta License" src="https://img.shields.io/github/license/refiaa/GPvMSM_Beta?color=orange&style=for-the-badge"></a>
 <a href="https://github.com/refiaa/GPvMSM_Beta/issues"><img alt="GPvMSM_Beta issues" src="https://img.shields.io/github/issues/refiaa/GPvMSM_Beta?color=purple&style=for-the-badge"></a>
 
-http://database.rish.kyoto-u.ac.jp/arch/jmadata/
-
 気象庁の数値予報データGPVのダウンロード・集計・ダウンスケーリングを自動化したコードです。
 GPvMSMや気象庁数値予報データに関するもっと詳しい情報は上記のリンクをご参照ください。
 
