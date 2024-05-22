@@ -1,4 +1,4 @@
-<h1 align="center">GPv-MSM AutoDownloader - Downscaler</h1>
+<h1 align="center">GPV-MSM AutoDownloader - Downscaler</h1>
 <em><h5 align="center">(Programming Language - Python 3)</h5></em>
 
 気象庁の数値予報データGPVのダウンロード・集計・ダウンスケーリングを自動化したコードです。
@@ -13,8 +13,8 @@ YYYY_DOWNSCALING_METHOD.ncはダウンスケーリングデータです。
 **Clone and Install Script**
 
 ```shell script
-git clone https://github.com/refiaa/GPvMSM_Beta.git
-cd GPvMSM_Beta
+git clone https://github.com/refiaa/GPV-MSM.git
+cd GPV-MSM
 pip install -r requirements.txt
 ```
 
