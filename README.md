@@ -23,7 +23,7 @@ pip install -r requirements.txt
 
 ファイルのディレクトリ構造は以下のようになりますのでご参照ください。
 ```shell script
-GPvMSM_Beta
+GPV-MSM
 ├─lib
 ├─nc
 │  ├─GPvMSM
